@@ -1,0 +1,78 @@
+<!-- <!doctype html>-->
+<!-- <html lang="es">-->
+
+{% extends 'modulo_gerente/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block section_title %}Rendimiento de los agentes de ventas{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row kpi-row">
+        <!-- Contenedor de KPI: Ventas Totales -->
+        <div class="col-md-3 kpi-card">
+            <h5>Ventas Totales</h5>
+            <h2 id="total-ventas">$ {{ total_ventas|floatformat:2|intcomma }}</h2>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'modulo_gerente/dashboard.css' %}">
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log("Dashboard cargado. Escuchando eventos de actualización de KPIs.");
+
+        // Escuchar el evento `kpiUpdate` para actualizar los KPIs en tiempo real
+        window.addEventListener('kpiUpdate', function(event) {
+            console.log("Evento `kpiUpdate` recibido con los siguientes detalles:", event.detail);
+            const { startDate, endDate, agentes } = event.detail;
+
+            // Asegurarnos de que los parámetros sean correctos antes de realizar la solicitud AJAX
+            if (startDate && endDate && agentes.length > 0) {
+                actualizarVentasTotales(startDate, endDate, agentes);
+            } else {
+                console.error("Parámetros inválidos recibidos para actualizar KPI de ventas:", event.detail);
+            }
+        });
+
+        function actualizarVentasTotales(startDate, endDate, agentes) {
+            var url = `/api/v1/ventas-totales/?start_date=${startDate}&end_date=${endDate}&agentes=${agentes.join(',')}`;
+            console.log("URL generada para la solicitud AJAX:", url);
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function(data) {
+                    console.log("Datos recibidos para Ventas Totales:", data);
+                    if (!data || typeof data.total_ventas !== 'number') {
+                        console.error("Error: Respuesta inválida del servidor", data);
+                        $('#titulo-ventas').text('Ventas Totales: Error al cargar');
+                        return;
+                    }
+                    const valor = data.total_ventas || 0;
+                    // Actualiza el título con el total de ventas
+                    $('#titulo-ventas').text(`Ventas Totales: $${valor.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`);
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al cargar los datos de KPIs:", error);
+                    $('#titulo-ventas').text('Ventas Totales: Error al cargar');
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}
+
+</html>
