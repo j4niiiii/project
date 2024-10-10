@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gerente{% endblock %}</title>
+    <!-- Include CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <!-- CSS  de Secciones -->
+    <link rel="stylesheet" href="{% static 'modulo_gerente/css/style_base.css' %}">
+    <link rel="stylesheet" href="{% static 'modulo_gerente/css/dashboard_gerente.css' %}">
+
+     <!-- Include JS -->
+   <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+   <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+<!-- Estilos para el menú desplegable con checkboxes -->
+   <style>
+       .dropdown-checkbox-menu {
+           display: none;
+           position: absolute;
+           background-color: white;
+           min-width: 250px;
+           box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+           padding: 10px;
+           z-index: 1;
+       }
+
+
+       .dropdown-checkbox-menu .checkbox-item {
+           margin: 5px 0;
+       }
+
+
+       .show {
+           display: block;
+       }
+   </style>
+</head>
+
+
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+
+            <!-- Barra Superior -->
+            <div class="col-12 d-flex align-items-center" id="top-bar">
+                <!-- Logo a la izquierda -->
+                <div class="logo-container d-flex align-items-center">
+                    <h1 id="logo-title" class="ml-4">ARAGB</h1>
+                </div>
+
+                <!-- Contenedor del título centrado -->
+                <div class="title-wrapper flex-grow-1 text-center d-flex justify-content-center">
+                    <h1 class="m-0 text-center" style="flex-grow: 1;">
+                        {% block section_title %}Rendimiento de agentes de ventas{% endblock %}
+                    </h1>
+                </div>
+
+                <!-- Botón "Back Home" a la derecha -->
+                <div class="d-flex justify-content-end" style="flex-grow: 0;">
+                    <a href="{% url 'home' %}" class="btn btn-light d-flex align-items-center mr-4">
+                        <i class="fas fa-home mr-2"></i> Back Home
+                    </a>
+                </div>
+            </div>
+               <!-- Barra Lateral -->
+                <div class="col-md-2 bg-success text-white" id="sidebar">
+                <!-- Perfil del usuario en la barra lateral -->
+                <div class="text-center mt-4 mb-4">
+                    <i class="fas fa-user-circle" style="font-size: 70px; color: white;"></i> <!-- Ícono del perfil -->
+                <!--<h5 class="user-name">Manuel Martinez</h5> -->
+                    <h5 class="user-name">{{ request.session.usuario_nombre }} {{ request.session.usuario_apellido }}</h5>
+                    <p class="user-role">Gerente</p>
+                </div>
+
+                <!-- Menú de Navegación -->
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                         <a class="nav-link text-white" href="{% url 'modulo_gerente:dashboard' %}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'modulo_gerente:perfil_gerente' %}">Mi perfil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'modulo_gerente:metas' %}">Metas</a>
+                    </li>
+                    <li class="nav-item">
+                         <a class="nav-link text-white" href="{% url 'modulo_gerente:descansos' %}">Descansos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'modulo_gerente:datos_agentes' %}">Datos agentes</a>
+                    </li>
+
+                    <!-- Filtro de fechas -->
+                    <li class="nav-item">
+                       <div class="container">
+                           <label for="dateRange">Fecha</label>
+                           <input type="text" id="dateRange" class="form-control" style="width: 200px;" />
+                       </div>
+                   </li>
+
+                    <!-- Dropdown -->
+
+                   <li class="nav-item">
+                       <a class="nav-link text-white" href="#" id="agentes-trigger">Agentes</a>
+                       <div id="agent-dropdown-menu" class="dropdown-checkbox-menu">
+                           <div class="checkbox-item">
+                               <input type="checkbox" id="select-all-agents">
+                               <label for="select-all-agents">Seleccionar Todos</label>
+                           </div>
+                           <hr>
+                           <div id="agent-list">
+                               <!-- Aquí se cargarán dinámicamente los agentes con checkboxes -->
+                           </div>
+                       </div>
+                   </li>
+
+                    <!-- Cerrar sesión estilizado como los enlaces anteriores -->
+                    <li class="nav-item">
+                        <form action="{% url 'logout' %}" method="POST" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-white logout-link d-flex align-items-center" style="border: none; background: none; cursor: pointer; justify-content: flex-start;">
+                                <i class="fas fa-power-off" style="margin-right: 10px; font-size: 1.2em;"></i> Cerrar sesión
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+
+                <!-- Contenido Principal -->
+                <div class="col-md-10" id="main-content" style="padding: 0; margin: 0;">
+                    <div class="content-wrapper">
+                        {% block content %}
+                        <!-- Aquí se cargará el contenido dinámico de cada página -->
+                        {% endblock %}
+                    </div>
+                </div>
+            </div>
+    </div>
+
+
+    <!-- Inicializar el selector de rango de fechas -->
+    <!-- Inicializar el selector de rango de fechas y cargar la lista de agentes -->
+   <script type="text/javascript">
+       $(document).ready(function() {
+           // Inicializar el selector de fechas
+           var today = moment().format('DD/MM/YYYY');
+           $('#dateRange').daterangepicker({
+               opens: 'left',
+               startDate: today,
+               endDate: today,
+               locale: {
+                   format: 'DD/MM/YYYY',
+                   applyLabel: 'Aplicar',
+                   cancelLabel: 'Cancelar',
+                   daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
+                   monthNames: [
+                       'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+                   ]
+               }
+           });
+
+
+           // Control de eventos y cargar agentes
+           $('#agentes-trigger').on('click', function(event) {
+               event.preventDefault();
+               $('#agent-dropdown-menu').toggleClass('show');
+           });
+
+
+           // Cerrar menú de agentes al hacer clic fuera
+           $(document).on('click', function(event) {
+               if (!$(event.target).closest('#agent-dropdown-menu, #agentes-trigger').length) {
+                   $('#agent-dropdown-menu').removeClass('show');
+               }
+           });
+
+
+           cargarAgentes();
+
+
+           $(document).on('change', '#select-all-agents', function() {
+               $('.agent-checkbox').prop('checked', $(this).prop('checked'));
+               emitirActualizacionKPI();
+           });
+
+
+           $(document).on('change', '.agent-checkbox', function() {
+               emitirActualizacionKPI();
+           });
+
+
+           $('#dateRange').on('apply.daterangepicker', function(ev, picker) {
+               emitirActualizacionKPI();
+           });
+
+
+           function cargarAgentes() {
+               $.ajax({
+                   url: `http://127.0.0.1:8000/api/v1/usuarios/?rol_id=2`,
+                   type: 'GET',
+                   success: function(data) {
+                       $('#agent-list').empty();
+                       data.forEach(function(agent) {
+                           $('#agent-list').append(`
+                               <div class="checkbox-item">
+                                   <input type="checkbox" class="agent-checkbox" value="${agent.id_usuario}" checked> ${agent.nombre}
+                               </div>
+                           `);
+                       });
+                       $('#select-all-agents').prop('checked', true);
+                       emitirActualizacionKPI();
+                   },
+                   error: function(xhr, status, error) {
+                       console.error("Error al cargar agentes:", error);
+                       $('#agent-list').html('<div class="text-danger">Error al cargar agentes</div>');
+                   }
+               });
+           }
+
+
+           function emitirActualizacionKPI() {
+           var dateRange = $('#dateRange').data('daterangepicker');
+           var startDate = dateRange.startDate.format('YYYY-MM-DD');
+           var endDate = dateRange.endDate.format('YYYY-MM-DD');
+           var selectedAgents = [];
+
+           // Recoger los agentes seleccionados
+           $('.agent-checkbox:checked').each(function() {
+               selectedAgents.push($(this).val());
+           });
+
+           console.log("Datos a enviar al endpoint:", { startDate, endDate, agentes: selectedAgents });
+
+           var eventoActualizacion = new CustomEvent('kpiUpdate', {
+               detail: {
+                   startDate: startDate,
+                   endDate: endDate,
+                   agentes: selectedAgents
+               }
+           });
+           window.dispatchEvent(eventoActualizacion);
+        }
+
+       });
+   </script>
+</body>
+
+
+</html>
